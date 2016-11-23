@@ -1,49 +1,44 @@
-;  Build using these commands:
-;    nasm -f elf64 -g -F stabs eatsyscall.asm
-;    ld -o eatsyscall eatsyscall.o
-;
-	
-SECTION .bss			; Section containing uninitialized data	
-	Buff resb 1
+SECTION .bss
+	BUFFLEN equ 1024
+	Buff: resb BUFFLEN
 
-SECTION .data			; Section containing initialised data
+SECTION .data
 
-SECTION .text			; Section containing code
+SECTION .text
 
-global 	_start			; Linker needs this to find the entry point!
-	
+global _start
+
 _start:
-	
+	nop	;suppose it's needed
 Read:	mov eax,3
 	mov ebx,0
 	mov ecx,Buff
-	mov edx,1
-	int 80h
+	mov edx,BUFFLEN
+	int 80H
 	
 	cmp eax,0
 	je Exit
 	
-	cmp byte [Buff],61H
-	jb Write
+	mov esi,eax
+	mov ebp,Buff
+	mov ecx,esi
+Scan:	dec ecx
+	cmp byte [ebp+ecx],61H
+	jb Next
 	
-	cmp byte [Buff],7bH
-	ja Write
+	cmp byte [ebp+ecx],7bH
+	ja Next
 	
-	sub byte [Buff],20H
-	jmp Write
-	
-
+	sub byte [ebp+ecx],20H
+Next:	cmp ecx,0
+	jnz Scan
 Write:	mov eax,4
 	mov ebx,1
 	mov ecx,Buff
-	mov edx,1
+	mov edx,esi
+	int 80H
 	
-	int 80h
-	
-	;cmp eax,0
-	;je Read
 	jmp Read
-
 Exit:	mov eax,1
 	mov ebx,0
-	int 80h
+	int 80H
